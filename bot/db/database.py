@@ -2,27 +2,19 @@ import sqlite3
 from pathlib import Path
 
 DB_PATH = Path("bot.db")
+SCHEMA_PATH = Path(__file__).parent / "schema.sql"
 
 
 def init_db():
+    """Initialize database with schema from schema.sql"""
     with sqlite3.connect(DB_PATH) as conn:
         cursor = conn.cursor()
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS users (
-                user_id INTEGER PRIMARY KEY,
-                current_index INTEGER DEFAULT 0
-            )
-        """)
-
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS known_words (
-                user_id INTEGER,
-                word TEXT,
-                PRIMARY KEY (user_id, word)
-            )
-        """)
-
+        
+        # Read and execute schema
+        with open(SCHEMA_PATH, "r", encoding="utf-8") as f:
+            schema = f.read()
+            cursor.executescript(schema)
+        
         conn.commit()
 
 
@@ -76,3 +68,33 @@ def get_known_words(user_id: int):
             (user_id,)
         )
         return [row[0] for row in cursor.fetchall()]
+
+
+def get_user_index(user_id: int) -> int:
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "SELECT current_index FROM users WHERE user_id = ?",
+            (user_id,),
+        )
+        row = cursor.fetchone()
+
+        if row is None:
+            cursor.execute(
+                "INSERT INTO users (user_id, current_index) VALUES (?, 0)",
+                (user_id,),
+            )
+            conn.commit()
+            return 0
+
+        return row[0]
+
+
+def set_user_index(user_id: int, index: int):
+    with sqlite3.connect(DB_PATH) as conn:
+        cursor = conn.cursor()
+        cursor.execute(
+            "UPDATE users SET current_index = ? WHERE user_id = ?",
+            (index, user_id),
+        )
+        conn.commit()
