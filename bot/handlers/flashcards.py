@@ -33,6 +33,24 @@ async def know_word(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     await send_next_word(query.message, user_id)
 
+    # показуємо наступну
+    await send_flashcard(
+        query.message.chat_id,
+        context,
+        user_id
+    )
+
+async def know_word(update: Update, context):
+    query = update.callback_query
+    await query.answer()
+
+    user_id = query.from_user.id
+    index = get_user(user_id)
+
+    if index >= len(WORDS):
+        await query.message.answer("🎉 Слова закінчились")
+        return
+
 def build_keyboard():
     keyboard = [
         [
@@ -77,11 +95,45 @@ async def send_next_word(message, user_id):
         f"🇺🇦 {word['ua']}"
     )
 
-    await message.answer(
-        text,
-        reply_markup=build_keyboard()
+async def next_word(update: Update, context):
+    query = update.callback_query
+    await query.answer()
+
+    user_id = query.from_user.id
+    index = get_user(user_id)
+
+    update_index(user_id, index + 1)
+
+    await send_flashcard(
+        query.message.chat_id,
+        context,
+        user_id
     )
 
+async def send_flashcard(chat_id: int, context, user_id: int):
+    index = get_user(user_id)
+
+    if index >= len(WORDS):
+        await context.bot.send_message(
+            chat_id=chat_id,
+            text="🎉 Ти пройшов усі слова!"
+        )
+        return
+
+    word_data = WORDS[index]
+
+    text = (
+        f"🇬🇧 {word_data['word']}\n"
+        f"{word_data['ipa']}\n"
+        f"🇺🇦 {word_data['ua']}"
+    )
+
+    await context.bot.send_photo(
+        chat_id=chat_id,
+        photo=word_data["image"],
+        caption=text,
+        reply_markup=build_keyboard(),
+    )
 
 # 🔥 ГОЛОВНИЙ handler кнопок
 async def flashcard_buttons(update, context: ContextTypes.DEFAULT_TYPE):
@@ -96,4 +148,9 @@ def get_flashcard_handlers():
     return [
         CallbackQueryHandler(know_word, pattern="^know$"),
         CallbackQueryHandler(flashcard_buttons, pattern="^(dont_know|next)$"),
+    ]
+def get_flashcard_handlers():
+    return [
+        CallbackQueryHandler(know_word, pattern="^know$"),
+        CallbackQueryHandler(next_word, pattern="^(dont_know|next)$"),
     ]
