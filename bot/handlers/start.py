@@ -22,7 +22,7 @@ async def start_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    await send_flashcard(query.message.chat_id, context)
+    await send_flashcard(query.message.chat.id, context)
 
 
 def get_start_handlers():

@@ -3,8 +3,7 @@ import random
 from telegram import Update
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import CallbackQueryHandler, ContextTypes
-from telegram.ext import MessageHandler
-from telegram.ext import filters
+
 from bot.data.words import WORDS
 from bot.db.database import (
     get_user,
@@ -90,7 +89,7 @@ async def flashcard_buttons(update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     # показуємо наступну картку
-    await send_flashcard(query.message.chat_id, context)
+    await send_flashcard(query.message.chat.id, context)
 
 
 def get_flashcard_handlers():
