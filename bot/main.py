@@ -1,7 +1,7 @@
 import os
 import logging
 from dotenv import load_dotenv
-from telegram.ext import Application
+from telegram.ext import Application, ApplicationBuilder
 
 from bot.handlers.start import get_start_handlers
 from bot.handlers.flashcards import get_flashcard_handlers
@@ -22,6 +22,10 @@ async def error_handler(update, context):
     """Log the error and notify the user"""
     logger.error(f"Update {update} caused error {context.error}")
 
+async def error_handler(update, context):
+    print(f"Exception: {context.error}")
+
+    ApplicationBuilder.add_error_handler(error_handler)
 
 def main():
     init_db()
