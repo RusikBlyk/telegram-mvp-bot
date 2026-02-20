@@ -3,20 +3,25 @@ from dotenv import load_dotenv
 from telegram.ext import Application
 
 from bot.handlers.start import get_start_handlers
-from bot.handlers.flashcards import get_flashcard_handler
+from bot.handlers.flashcards import get_flashcard_handlers
+from bot.db.database import init_db
 
 load_dotenv()
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
 
 def main():
+    init_db()
+
     app = Application.builder().token(BOT_TOKEN).build()
 
-    # handlers
+    # --- start handlers ---
     for handler in get_start_handlers():
         app.add_handler(handler)
 
-    app.add_handler(get_flashcard_handler())
+    # --- flashcard handlers ---
+    for handler in get_flashcard_handlers():
+        app.add_handler(handler)
 
     print("🚀 Bot started (polling)")
     app.run_polling()
